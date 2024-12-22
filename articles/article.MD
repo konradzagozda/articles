@@ -1,0 +1,164 @@
+# Splunk Power User Certification (SPLK-1002)
+
+Recently I undertook SPLK-1002 certification. It was a great experience and incentive for learning about splunk core product.
+
+Here I share the concepts required to pass the exam and my way of learning. For official materials see [Training & Certification](https://www.splunk.com/en_us/training/certification-track/splunk-core-certified-power-user.html).
+
+## Concepts covered by exam
+
+List in order of how important they are for exam. Each part have AI generated audio podcast complement created with NotebookLM so you can listen to related content in your breaks! Treat it more like a very easy introduction and verify information, actors sometimes hallucinate or don't tell the truth.
+
+### Part 1
+
+1. Field Extractor
+2. transaction Command
+3. Data Model
+4. Datasets
+5. Macro
+6. eval Command
+7. Splunk Common Information Model (CIM)
+8. Event Type
+9. stats Command
+10. Tags
+
+[audio part 1](https://open.spotify.com/episode/6itFRAGBOq3YRZlcEHMCsc?si=LmfvBSQPTHuG-CdNW77D3g)
+
+### Part 2
+
+1. Workflow Action
+2. Timechart Command
+3. Calculated Fields
+4. Macro
+5. Link POST Workflow Action
+6. Search Workflow Action
+7. Sequence of Search-time Operations
+8. Field Alias
+9. Pivot
+10. Link GET Workflow Action
+
+[audio part 2](https://open.spotify.com/episode/6uOZU1c1ziqWsnCDjOKeQC?si=7aeb574b545140c5)
+
+### Part: 3
+
+1. Lookups
+2. chart Command
+3. fillnull Command
+4. Knowledge Objects
+5. datamodel Command
+6. where Command
+7. Types of Commands
+8. Search Modes
+9. Search Types (Real-time, Scheduled, Subsearch)
+10. join Command
+
+[audio part 3](https://open.spotify.com/episode/3rZFmazKckvDWAulMIy44W?si=b09a978f13484f1a)
+
+### Part: 4
+
+1. table Command
+2. tostring Function
+3. isnotnull Function
+4. isnull Function
+5. Splunk Add-on
+6. Data Model Acceleration
+7. fields Command
+8. sort Command
+9. streamstats Command
+10. highlight Command
+
+[audio part 4](https://open.spotify.com/episode/2ZBug1mKtTBFTnkrgZRLZB?si=e649d60ab62f43f6)
+
+### Part: 5
+
+1. rex Command
+2. appendcols Command
+3. append Command
+4. format Command
+5. top Command
+6. rare Command
+7. tstats Command
+8. Functions (Evaluation Functions)
+9. case Function
+10. if Function
+
+[audio part 5](https://open.spotify.com/episode/2ybAWX5czPCsbZLfpJkagr?si=f60b99cef17e44b8)
+
+### Part: 6
+
+1. coalesce Function
+2. like Function
+3. Splunk Apps
+4. Saved Search
+5. Fields
+6. Search
+7. Chart Types
+8. props.conf, eventtypes.conf configuration files
+9. Index
+
+[audio part 6](https://open.spotify.com/episode/42Y20UMLniP5dEMlGVPud7?si=7986ae662cf84bfd)
+
+## 1. Setup a Playground
+
+For testing concepts in real product.
+
+1. Setup splunk[^1] with docker[^2]
+
+```bash
+# try without --platform first, if it fails then use --platform linux/x86_64
+# replace <host_port> with the port you want to expose splunk on your host machine e.g. 8000
+# replace <password> with your desired password, it will be your admin password
+docker run -d -p <host_port>:8000 --platform linux/x86_64 \
+    -e SPLUNK_START_ARGS='--accept-license' \
+    -e SPLUNK_PASSWORD='<password>' splunk/splunk:latest
+```
+
+If you're on mac with arm64 archtecture you can still use linux/x86_64 splunk image and it should work good enough for experiments.
+
+1. Login to splunk at`localhost:<host_port>` with `admin:<passowrd>`
+
+### 2. Prepare AI assistant
+
+1. Choose your AI assistant
+   At a time of writing I recommend gemini experimental 1206 at <https://aistudio.google.com/> but you can use any other AI assistant you want.
+
+2. Setup system prompt for experiment generation e.g.:
+
+```text
+- I want to learn about splunk for certification: splunk power user certificate splk-1002
+- You're splunk consultant and teacher with a lot of hands-on experience.
+- do not use comments within SPL
+- If I want example, I'm asking for "makeresults" first and "collect" as a first step, always load to "main" index. these should be atleast 100 events generated.
+
+example of mocking data:
+
+| makeresults count=150
+| eval \_time = \_time - random() % (60*60*24\*14)
+| eval ip_address = case(
+random() % 4 == 0, "192.168.1." . (random() % 255),
+random() % 4 == 1, "10.0.0." . (random() % 255),
+random() % 4 == 2, "172.16." . (random() % 32) . "." .(random() % 255),
+1==1, "unknown"
+)
+| eval http_method = mvindex(split("GET,POST,PUT,DELETE,HEAD", ","), random() % 5)
+| eval url = mvindex(split("/home,/about,/products,/cart,/login,/logout", ","), random() % 6)
+| eval http_status = mvindex(split("200,201,400,404,500", ","), random() % 5)
+| eval bytes = random() % 4096
+| collect index=main sourcetype="example_no_2"
+
+- awlays include different sourcetype so I can reference my events easily
+- always collect to the main index with unique sourcetype per example
+- if you need to concatenate always use period (.) to avoid type issues
+- if I'm asking for multiple examples in one prompt I mean to reuse mocked data
+```
+
+### Try it out
+
+Ask about any concept and get examples. e.g.
+
+- can you explain me timechart on 2-3 different examples?
+- can you guide me how to use field extractor in splunk UI?
+
+gemini is super smart about UI of splunk, it almost know it by heart.
+
+[^1]: [Deploy Splunk Enterprise Docker containers](https://docs.splunk.com/Documentation/Splunk/9.3.2/Installation/DeployandrunSplunkEnterpriseinsideDockercontainers)
+[^2]: [Docker Desktop installation guide](https://docs.docker.com/desktop/)
